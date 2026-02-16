@@ -12,3 +12,4 @@ USER_ID_TO_INTRO_FILE_MAP = {
 BOT_NAME = "Evil Knight" # Should be in parity with the  bot's discord username (not strictly necessary)
 
 ANNOUNCEMENT_CHANNEL_TYPE = "announcement_channel_id"
+MODERATOR_CHANNEL_TYPE = "moderator_channel_id"

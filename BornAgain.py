@@ -74,10 +74,10 @@ async def on_ready():
 
 
 @client.event
-async def on_member_join(member):
+async def on_member_join(member: discord.Member):
     # Set the default role for new members
-    if botInstance.has_default_role():
-        default_role_name = botInstance.get_default_role()
+    if botInstance.has_default_role(member.guild.id):
+        default_role_name = botInstance.get_default_role(member.guild.id)
         await botInstance.set_role(default_role_name, member)
 
     await botInstance.send_on_member_join_messages(member)

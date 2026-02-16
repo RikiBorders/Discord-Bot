@@ -29,7 +29,7 @@ class GuildConfigurationManagerHelper:
         
         data = getattr(response, "data", None)
         if not data:
-            raise RecordNotFoundError(f"Server data not found for guild_id {self.guild_id}")
+            raise RecordNotFoundError(f"Server data not found for guild_id {guild_id}")
 
         columns = data[0] if isinstance(data, list) else data
         configuration = columns if isinstance(columns, dict) else {}

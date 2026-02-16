@@ -1,3 +1,4 @@
+import discord
 from discord import app_commands
 from dotenv import load_dotenv
 import os
@@ -17,6 +18,48 @@ The everlasting legacy of Wiz, Sayori, Tanaka, and Goose.
 '''
 botInstance = Bot()
 client = botInstance.get_client()
+
+@client.tree.command(
+        name="help",
+        description="Displays the bot help menu",
+)
+async def help(interaction: discord.Interaction):
+    await interaction.response.send_message(
+        ephemeral=True,
+        embed=build_help_embed().to_discord_embed()
+    )
+
+@client.tree.command(
+        name="sharerules",
+        description="Sends a message containing the server rules",
+)
+@app_commands.checks.has_permissions(administrator=True)
+@app_commands.describe(channel_id="channel_id")
+async def sendrules(interaction: discord.Interaction, channel_id: str):
+    guild_id = botInstance.get_guild_id_from_interaction(interaction)
+    await botInstance.send_rules_message(interaction, channel_id, guild_id)
+
+@client.tree.command(
+        name="announce",
+        description="Sends an announcement to the announcement channel.",
+)
+@app_commands.checks.has_permissions(administrator=True)
+@app_commands.describe(description="announcement_description", title="announcement_title")
+async def announce(interaction: discord.Interaction, title: str, description: str):
+    await botInstance.send_announcement_message(interaction, title, description)
+
+@client.tree.command(
+        name="votekick",
+        description="Starts a vote to kick a user from the server.",
+)
+@app_commands.describe(user="The user to kick")
+async def votekick(interaction: discord.Interaction, user: discord.Member):
+    if VOTE_KICK_ENABLED:
+        await interaction.response.send_message(
+            f"A vote to kick {user.mention} has been started. Voting instructions have been sent to the announcement channel.",
+            ephemeral=True
+        )
+
 
 def bot_booter():
     load_dotenv()
@@ -39,60 +82,14 @@ async def on_member_join(member):
 
     await botInstance.send_on_member_join_messages(member)
 
-@client.tree.command(
-        name="help", 
-        description="Displays the bot help menu",
-        guild=discord.Object(id=367021007690792961) #TODO: save this to the bot state and use it to key into server specific configurations
-)
-async def help(interaction: discord.Interaction):
-    await interaction.response.send_message(
-        ephemeral=True,
-        embed=build_help_embed().to_discord_embed()
-    )
-
-@client.tree.command(
-        name="sharerules",
-        description="Sends a message containing the server rules",
-        guild=discord.Object(id=367021007690792961) #TODO: save this to the bot state and use it to key into server specific configurations
-)
-@app_commands.checks.has_permissions(administrator=True)
-@app_commands.describe(channel_id="channel_id")
-async def sharerules(interaction: discord.Interaction, channel_id: str):
-    await botInstance.send_rules_message(interaction, channel_id)
-
-@client.tree.command(
-        name="announce", 
-        description="Sends an announcement to the announcement channel.",
-        guild=discord.Object(id=367021007690792961) #TODO: save this to the bot state and use it to key into server specific configurations
-)
-@app_commands.checks.has_permissions(administrator=True)
-@app_commands.describe(description="announcement_description", title="announcement_title")
-async def announce(interaction: discord.Interaction, title: str, description: str):
-    await botInstance.send_announcement_message(interaction, title, description)
-
-@client.tree.command(
-        name="votekick", 
-        description="Starts a vote to kick a user from the server.",
-        guild=discord.Object(id=367021007690792961) #TODO: save this to the bot state and use it to key into server specific configurations
-)
-@app_commands.describe(user="The user to kick")
-async def votekick(interaction: discord.Interaction, user: discord.Member):
-    '''
-    Send a notification, and create a petition to vote kick a member from the server.
-    '''
-    if VOTE_KICK_ENABLED:
-        await interaction.response.send_message(
-            f"A vote to kick {user.mention} has been started. Voting instructions have been sent to the announcement channel.",
-            ephemeral=True
-        )
 
 # Test commands available only in the beta environment
 
-# This command needs to be run to register the slash commands with Discord
+# This command needs to be run to register the slash commands with Discord. It will sync commands to ALL server
 @client.command()
 async def sync_commands(ctx, *params):
     if os.getenv("STAGE") == "beta":
-        await client.tree.sync(guild=ctx.guild)
+        await client.tree.sync()
         await ctx.send("Commands synced")
 
         

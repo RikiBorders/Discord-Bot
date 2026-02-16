@@ -1,7 +1,7 @@
 import logging
 import sys
 
-def configure_logging(level=logging.INFO):
+def configure_logging(level=logging.DEBUG):
     """
     Configure the root logger with a standard format.
     

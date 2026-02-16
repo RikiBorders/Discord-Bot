@@ -22,5 +22,5 @@ class ChannelRegistryHelper:
     def get_channels(self):
         return self.channels
     
-    def get_channel_id(self, channel_type: str) -> Optional[int]:
-        return int(self.channels.get(channel_type))
+    def get_channel_id(self, config_data: dict, channel_type: str) -> Optional[int]:
+        return int(config_data['channels'][channel_type]) if channel_type in config_data['channels'] else None

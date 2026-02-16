@@ -5,34 +5,27 @@ from logger_config.logger import get_logger
 
 from client.supabase_client import SupabaseClient
 from exception.record_not_found_exception import RecordNotFoundError
-from helper.channel_registry_helper import ChannelRegistryHelper
 from typing import Optional
+from helper.guild_configuration_manager_helper import RULES_KEY, GuildConfigurationManagerHelper
 from util.embed_utils import build_welcome_embed, build_announcement_embed, build_rules_embed
+from constant.Constants import ANNOUNCEMENT_CHANNEL_TYPE
 
 logger = get_logger(__name__)
 
 
 class Bot():
+
     def __init__(self):
         self.client = self.create_client()
-        self.channel_registry_helper = ChannelRegistryHelper()
-        self.guild_id = self.set_guild_id()
+        self.guild_configuration_manager_helper = GuildConfigurationManagerHelper()
         self.introTimer = {
             'active': False, 
             'current_time': 0
         }
         self.supabase_client = SupabaseClient()
         self.server_data = self.get_server_data_from_supabase()
-        logger.debug(f"Server data loaded: {self.server_data}")
-
-        self.rules = self.get_rules()
-        self.register_channels()
+        self.guild_id = self.set_guild_id()
         logger.info("Bot initialized successfully")
-
-    def register_channels(self):
-        self.channel_registry_helper.register_channel("command", self.server_data['channels']['command_channel_id']) 
-        self.channel_registry_helper.register_channel("welcome", self.server_data['channels']['welcome_channel_id'])
-        self.channel_registry_helper.register_channel("announcement", self.server_data['channels']['announcement_channel_id'])
 
     def create_client(self):
         intents = discord.Intents.all()
@@ -45,54 +38,14 @@ class Bot():
     def get_client(self):
         return self.client
 
-    def get_rules(self) -> list[str]:
-        rules = self.server_data.get('rules', [])
-        if rules:
-            return rules['rules']
-
-    def get_channel_by_channel_type(self, channel_type: str) -> discord.TextChannel | discord.VoiceChannel:
-        '''
-        retrieve a discord channel object by its registered channel type. Can return
-        TextChannel or VoiceChannel.
-        '''
-        channel_id: int = self.channel_registry_helper.get_channel_id(channel_type)
-
-        if channel_id:
-            return self.client.get_channel(channel_id)
-        else:
-            raise ValueError(f"Channel type not found, or unset: {channel_type}")
-
-    def get_channel_id_from_supabase(self, channel_type: str) -> int:
-        response = self.supabase_client.get_channels(self.guild_id)
-
-        # The PostgREST client returns an object with a `data` attribute.
-        # `data` is usually a list of rows or a single dict depending on the query.
-        data = getattr(response, "data", None)
-        if not data:
-            return None
-
-        # Normalize to a single row dict
-        row = data[0] if isinstance(data, list) else data
-
-        # The `channels` column may already be a dict or a JSON string.
-        channels = row.get("channels") if isinstance(row, dict) else None
-        if not channels or not isinstance(channels, dict):
-            return None
-
-        if isinstance(channels, str):
-            try:
-                channels = json.loads(channels)
-            except json.JSONDecodeError:
-                channels = None
-
-        channel_id = channels.get(channel_type)
-        return int(channel_id) if channel_id is not None else None
-    
     def create_kick_petition(self):
         pass
     
     def get_server_data_from_supabase(self) -> dict:
-        response = self.supabase_client.get_server_data(self.guild_id)
+        '''
+        TODO: need to find a way to get the guild id for different servers so we can pull server data. Alternatively, the database will need to be restructured to not rely on guild_id as the primary key for server data.
+        '''
+        response = self.supabase_client.get_server_data(367021007690792961) # We key server data off of guild id
 
         data = getattr(response, "data", None)
         if not data:
@@ -107,8 +60,15 @@ class Bot():
     def get_image_urls_for_welcome_embed(self) -> list[str]:
         return self.server_data['image_urls']['welcome_image_urls']
     
-    def get_image_urls_for_announcement_embed(self) -> list[str]:
-        return self.server_data['image_urls']['announcement_image_urls']
+    def get_image_urls_for_announcement_embed(self, configuration_data) -> list[str]:
+        return configuration_data['image_urls']['announcement_image_urls']
+    
+    def get_guild_id(self) -> int:
+        #TODO: This needs to be deprecated. We shoudlnt store the guild id since the bot serves all guilds
+        return self.guild_id
+
+    def get_guild_id_from_interaction(self, interaction: discord.Interaction) -> int:
+        return interaction.guild_id
 
     def has_default_role(self) -> bool:
         default_role = self.server_data['default_role']
@@ -119,11 +79,15 @@ class Bot():
 
     def set_guild_id(self) -> int:
         # For now, return a hardcoded guild ID. In the future, this could be dynamic.
-        return 367021007690792961
+        return self.server_data['guild_id']
     
     def set_intro_timer(self, status: bool, time_in_seconds: int):
         self.introTimer['active'] = status
         self.introTimer['timer'] = time_in_seconds
+
+    def is_interaction_guild_equal_to_target_channel_id(self, interaction_guild_id: int, channel_id: int) -> bool:
+        channel_guild_id = self.client.get_channel(channel_id).guild.id
+        return interaction_guild_id == channel_guild_id
 
     async def set_role(self , role_name: str, member):
         role = discord.utils.get(member.guild.roles, name=role_name)
@@ -142,44 +106,53 @@ class Bot():
         )
 
     async def send_announcement_message(self, interaction: discord.Interaction, title: str, description: str):
-        image_urls = self.get_image_urls_for_announcement_embed()
-        announcement_channel_id = self.channel_registry_helper.get_channel_id("announcement")
+        guild_id = self.get_guild_id_from_interaction(interaction)
+        config_data = self.guild_configuration_manager_helper.get_configuration(guild_id)
+
+        image_urls = self.get_image_urls_for_announcement_embed(config_data)
+        announcement_channel_id = self.get_channel_id_by_channel_type(config_data, ANNOUNCEMENT_CHANNEL_TYPE)
         channel = await self.client.fetch_channel(announcement_channel_id)
 
         try:
-            await channel.send("@everyone")
-            await channel.send(
-                embed=build_announcement_embed(title, description, image_urls).to_discord_embed()
-            )
-            await interaction.response.send_message(
-                ephemeral=True,
-                content="Announcement sent successfully."
-            )
+            if self.is_interaction_guild_equal_to_target_channel_id(guild_id, announcement_channel_id):
+                await channel.send("@everyone")
+                await channel.send(
+                    embed=build_announcement_embed(title, description, image_urls).to_discord_embed()
+                )
+                await interaction.response.send_message(
+                    ephemeral=True,
+                    content="Announcement sent successfully."
+                )
         except Exception as e:
             await interaction.response.send_message(
                 ephemeral=True,
-                content=f"Error sending announcement"
+                content=f"Error sending announcement: {str(e)}"
             )
 
-    async def send_rules_message(self, interaction: discord.Interaction, channel_id: str):
+    async def send_rules_message(self, interaction: discord.Interaction, channel_id: str, ):
+        guild_id = self.get_guild_id_from_interaction(interaction)
+        config_data = self.guild_configuration_manager_helper.get_configuration(guild_id)
+        rules = config_data.get(RULES_KEY, [])
         try:
             channel = await self.client.fetch_channel(channel_id)
         except discord.InvalidData as e:
             await interaction.response.send_message(
                 ephemeral=True,
-                content=f"Error: Could not find channel with ID {channel_id}."
+                content=f"Error: Could not find channel with ID {channel_id}. Exception: {str(e)}"
             )
             return
-
-        await channel.send(
-            embed=build_rules_embed(self.rules).to_discord_embed()
+        if self.is_interaction_guild_equal_to_target_channel_id(interaction.guild_id, channel_id):
+            await channel.send(
+                embed=build_rules_embed(rules).to_discord_embed()
         )
 
     async def send_vote_kick_notification(self, interaction: discord.Interaction, user: discord.Member):
-        moderator_channel_id = self.channel_registry_helper.get_channel_id("moderator")
-        channel = await self.client.fetch_channel(moderator_channel_id)
+        #TODO: re-enable
+        # moderator_channel_id = self.channel_registry_helper.get_channel_id("moderator")
+        # channel = await self.client.fetch_channel(moderator_channel_id)
 
-        await channel.send(
-            f"A vote to kick {user.mention} has passed the threshold. Please review and confirm the kick."
-        )
+        # await channel.send(
+        #     f"A vote to kick {user.mention} has passed the threshold. Please review and confirm the kick."
+        # )
+        pass
     

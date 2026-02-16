@@ -30,7 +30,7 @@ async def help(interaction: discord.Interaction):
     )
 
 @client.tree.command(
-        name="sharerules",
+        name="sendrules",
         description="Sends a message containing the server rules",
 )
 @app_commands.checks.has_permissions(administrator=True)

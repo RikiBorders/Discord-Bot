@@ -24,5 +24,5 @@ class SupabaseClient:
             .eq("guild_id", guild_id)
             .execute()
         )
-
+        logger.info(f"Fetched server data for guild_id {guild_id} from Supabase: {response}")
         return response

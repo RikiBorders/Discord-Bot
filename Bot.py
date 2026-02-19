@@ -4,7 +4,7 @@ import json
 from logger_config.logger import get_logger
 
 from client.supabase_client import SupabaseClient
-from exception.record_not_found_exception import RecordNotFoundError
+from exception.no_channel_found_exception import NoChannelFoundException
 from typing import Optional
 from helper.guild_configuration_manager_helper import RULES_KEY, GuildConfigurationManagerHelper
 from util.embed_utils import build_welcome_embed, build_announcement_embed, build_rules_embed
@@ -50,6 +50,14 @@ class Bot():
     
     def get_guild_id_from_interaction(self, interaction: discord.Interaction) -> int:
         return interaction.guild_id
+    
+    def get_channel_id_by_channel_type(self, configuration_data: dict, channel_type: str) -> Optional[int]:
+        channels = configuration_data.get('channels', {})
+        channel_id = channels.get(channel_type, None)
+        if not channel_id:
+            logger.warning(f"Channel ID for {channel_type} not found in configuration.")
+            raise NoChannelFoundException(f"Channel ID for {channel_type} not found in configuration.")
+        return channel_id
 
     def has_default_role(self, guild_id: int) -> bool:
         default_role = self.get_default_role(guild_id)
@@ -62,9 +70,8 @@ class Bot():
         self.introTimer['active'] = status
         self.introTimer['timer'] = time_in_seconds
 
-    def is_interaction_guild_equal_to_target_channel_id(self, interaction_guild_id: int, channel_id: int) -> bool:
-        channel_guild_id = self.client.get_channel(channel_id).guild.id
-        return interaction_guild_id == channel_guild_id
+    def is_interaction_guild_equal_to_target_channel_id(self, interaction_guild_id: int, channel: discord.abc.GuildChannel) -> bool:
+        return interaction_guild_id == channel.guild.id
 
     async def set_role(self , role_name: str, member):
         role = discord.utils.get(member.guild.roles, name=role_name)
@@ -92,7 +99,7 @@ class Bot():
         channel = await self.client.fetch_channel(announcement_channel_id)
 
         try:
-            if self.is_interaction_guild_equal_to_target_channel_id(guild_id, announcement_channel_id):
+            if self.is_interaction_guild_equal_to_target_channel_id(guild_id, channel):
                 await channel.send("@everyone")
                 await channel.send(
                     embed=build_announcement_embed(title, description, image_urls).to_discord_embed()
@@ -119,13 +126,12 @@ class Bot():
                 content=f"Error: Could not find channel with ID {channel_id}. Exception: {str(e)}"
             )
             return
-        if self.is_interaction_guild_equal_to_target_channel_id(interaction.guild_id, channel_id):
+        if self.is_interaction_guild_equal_to_target_channel_id(interaction.guild_id, channel):
             await channel.send(
                 embed=build_rules_embed(rules).to_discord_embed()
         )
 
     async def send_vote_kick_notification(self, interaction: discord.Interaction, user: discord.Member):
-        #TODO: re-enable
         guild_id = self.get_guild_id_from_interaction(interaction)
         guild_config_data = self.guild_configuration_manager_helper.get_configuration(guild_id)
         moderator_channel_id = self.get_channel_id_by_channel_type(guild_config_data, "moderator_channel_id")

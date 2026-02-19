@@ -1,5 +1,5 @@
 from model.embed import Embed
-from text.help_menu_strings import HELP_MENU_DESCRIPTION
+from text.help_menu_strings import HELP_MENU_DESCRIPTION, HELP_MENU_COMMANDS
 from text.embed_strings import WELCOME_EMBED_DESCRIPTIONS
 from constant.Constants import BOT_NAME
 from random import choice
@@ -11,6 +11,10 @@ def build_help_embed():
         description=HELP_MENU_DESCRIPTION,
         color=0xff0000
     )
+
+    ### SUGGESTION FOR SCALE-ABLE-ish CMDS DISPLAY IMPLEMENTATION ###
+    for cmd, desc in HELP_MENU_COMMANDS.items():
+        embed.add_field(name=cmd, value=desc, inline=False)
     return embed
 
 def build_welcome_embed(member_count: int, image_urls: list[str]):

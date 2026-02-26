@@ -11,7 +11,6 @@ def build_help_embed():
         description=HELP_MENU_DESCRIPTION,
         color=0xff0000
     )
-
     ### SUGGESTION FOR SCALE-ABLE-ish CMDS DISPLAY IMPLEMENTATION ###
     for cmd, desc in HELP_MENU_COMMANDS.items():
         embed.add_field(name=cmd, value=desc, inline=False)

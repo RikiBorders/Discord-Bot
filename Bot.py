@@ -130,13 +130,3 @@ class Bot():
             await channel.send(
                 embed=build_rules_embed(rules).to_discord_embed()
         )
-
-    async def send_vote_kick_notification(self, interaction: discord.Interaction, user: discord.Member):
-        guild_id = self.get_guild_id_from_interaction(interaction)
-        guild_config_data = self.guild_configuration_manager_helper.get_configuration(guild_id)
-        moderator_channel_id = self.get_channel_id_by_channel_type(guild_config_data, "moderator_channel_id")
-
-        channel = await self.client.fetch_channel(moderator_channel_id)
-        await channel.send(
-            f"A vote to kick {user.mention} has passed the threshold. Please review and confirm the kick."
-        )

@@ -7,7 +7,6 @@ import logging
 from Bot import Bot
 from util.embed_utils import *
 from util.discord_task_utils import *
-from featureFlags.feature_flags import VOTE_KICK_ENABLED
 from logger_config.logger import configure_logging, get_logger
 
 configure_logging()
@@ -30,14 +29,13 @@ async def help(interaction: discord.Interaction):
     )
 
 @client.tree.command(
-        name="sendrules",
+        name="sharerules",
         description="Sends a message containing the server rules",
 )
 @app_commands.checks.has_permissions(administrator=True)
 @app_commands.describe(channel_id="channel_id")
-async def sendrules(interaction: discord.Interaction, channel_id: str):
-    guild_id = botInstance.get_guild_id_from_interaction(interaction)
-    await botInstance.send_rules_message(interaction, channel_id, guild_id)
+async def sharerules(interaction: discord.Interaction, channel_id: str):
+    await botInstance.send_rules_message(interaction, channel_id)
 
 @client.tree.command(
         name="announce",
@@ -47,19 +45,6 @@ async def sendrules(interaction: discord.Interaction, channel_id: str):
 @app_commands.describe(description="announcement_description", title="announcement_title")
 async def announce(interaction: discord.Interaction, title: str, description: str):
     await botInstance.send_announcement_message(interaction, title, description)
-
-@client.tree.command(
-        name="votekick",
-        description="Starts a vote to kick a user from the server.",
-)
-@app_commands.describe(user="The user to kick")
-async def votekick(interaction: discord.Interaction, user: discord.Member):
-    if VOTE_KICK_ENABLED:
-        await interaction.response.send_message(
-            f"A vote to kick {user.mention} has been started. Voting instructions have been sent to the announcement channel.",
-            ephemeral=True
-        )
-
 
 def bot_booter():
     load_dotenv()

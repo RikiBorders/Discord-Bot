@@ -5,7 +5,6 @@ When a user joins a channel, the bot will also join, play a song, then leave.
 ENABLE_INTRO_SONGS = False
 
 '''
-Enables the ability for users to start a vote to kick other users from the server.
-Votes which meet the configurable threshold for being kicked, will send a notification to the moderator chat to confirm the kick.
+Enables the /createevent command, which allows users to create events that will be posted in the announcement channel.
 '''
-VOTE_KICK_ENABLED = False
+CREATE_EVENT_ENABLED = False

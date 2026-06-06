@@ -4,6 +4,16 @@ from text.embed_strings import WELCOME_EMBED_DESCRIPTIONS
 from constant.Constants import BOT_NAME
 from random import choice
 
+def build_league_profile_embed(data: dict):
+
+    # TODO: move data parsing to a separate function in the Bot layer
+    embed = Embed(
+        title=f"{data['username']}'s League of Legends Profile",
+        description=f"Rank: {data['rank']}\nLP: {data['lp']}\nWins: {data['wins']}\nLosses: {data['losses']}",
+        color=0xff0000
+    )
+    return embed
+
 def build_help_embed():
 
     embed = Embed(

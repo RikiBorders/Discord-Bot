@@ -18,6 +18,8 @@ The everlasting legacy of Wiz, Sayori, Tanaka, and Goose.
 botInstance = Bot()
 client = botInstance.get_client()
 
+
+
 @client.tree.command(
         name="help",
         description="Displays the bot help menu",
@@ -28,6 +30,7 @@ async def help(interaction: discord.Interaction):
         embed=build_help_embed().to_discord_embed()
     )
 
+
 @client.tree.command(
         name="sharerules",
         description="Sends a message containing the server rules",
@@ -37,6 +40,7 @@ async def help(interaction: discord.Interaction):
 async def sharerules(interaction: discord.Interaction, channel_id: str):
     await botInstance.send_rules_message(interaction, channel_id)
 
+
 @client.tree.command(
         name="announce",
         description="Sends an announcement to the announcement channel.",
@@ -45,6 +49,26 @@ async def sharerules(interaction: discord.Interaction, channel_id: str):
 @app_commands.describe(description="announcement_description", title="announcement_title")
 async def announce(interaction: discord.Interaction, title: str, description: str):
     await botInstance.send_announcement_message(interaction, title, description)
+
+
+@client.tree.command(
+        name="getleagueprofile",
+        description="View your League of Legends overview.",
+)
+@app_commands.checks.has_permissions(administrator=True)
+@app_commands.describe(summoner="In-game-name", tag="In-game tag", region="Region")
+async def getLeagueProfile(interaction: discord.Interaction, summoner: str, tag: str, region: str): #
+
+    data = await botInstance.get_player_overview(
+        game_name=summoner,
+        tag_line=tag,
+        region=region
+    )
+    
+    await interaction.response.send_message(
+        ephemeral=True,
+        embed=build_league_profile_embed(data).to_discord_embed()
+    )
 
 def bot_booter():
     load_dotenv()
@@ -70,12 +94,13 @@ async def on_member_join(member: discord.Member):
 
 # Test commands available only in the beta environment
 
-# This command needs to be run to register the slash commands with Discord. It will sync commands to ALL server
+# This command needs to be run to register the slash commands with Discord. It will sync commands to ALL servers
 @client.command()
 async def sync_commands(ctx, *params):
     if os.getenv("STAGE") == "beta":
-        await client.tree.sync()
-        await ctx.send("Commands synced")
+        synced = await client.tree.sync()
+        await ctx.send(f"Synced {len(synced)} commands")
+        print([cmd.name for cmd in synced])
 
         
 if __name__ == "__main__":

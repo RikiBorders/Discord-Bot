@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import json
+from client.rift_watcher_client import RiftWatcherClient
 from logger_config.logger import get_logger
 
 from client.supabase_client import SupabaseClient
@@ -8,7 +9,7 @@ from exception.no_channel_found_exception import NoChannelFoundException
 from typing import Optional
 from helper.guild_configuration_manager_helper import RULES_KEY, GuildConfigurationManagerHelper
 from util.embed_utils import build_welcome_embed, build_announcement_embed, build_rules_embed
-from constant.Constants import ANNOUNCEMENT_CHANNEL_TYPE
+from constant.Constants import ANNOUNCEMENT_CHANNEL_TYPE, RIFT_WATCHER_ENDPOINT
 
 logger = get_logger(__name__)
 
@@ -18,6 +19,7 @@ class Bot():
     def __init__(self):
         self.client = self.create_client()
         self.guild_configuration_manager_helper = GuildConfigurationManagerHelper()
+        self.rift_watcher_client = RiftWatcherClient(server_url=RIFT_WATCHER_ENDPOINT)
         self.introTimer = {
             'active': False, 
             'current_time': 0
@@ -80,6 +82,7 @@ class Bot():
             logger.info(f"Assigned default role {role.name} to new member {member.name}")
 
     async def send_on_member_join_messages(self, member: discord.Member):
+        # TODO: Fix number tranlsations (1th, 2th, 3th) via a new input sanitation util function
         system_channel_id = member.guild.system_channel.id
         member_count = len([m for m in member.guild.members])
         guild_config_data = self.guild_configuration_manager_helper.get_configuration(member.guild.id)
@@ -129,4 +132,11 @@ class Bot():
         if self.is_interaction_guild_equal_to_target_channel_id(interaction.guild_id, channel):
             await channel.send(
                 embed=build_rules_embed(rules).to_discord_embed()
+        )
+            
+    async def get_player_overview(self, game_name: str, tag_line: str, region: str):
+        return await self.rift_watcher_client.get_player_overview(
+            game_name=game_name,
+            tag_line=tag_line,
+            region=region
         )

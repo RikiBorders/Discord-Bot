@@ -15,4 +15,4 @@ ANNOUNCEMENT_CHANNEL_TYPE = "announcement_channel_id"
 MODERATOR_CHANNEL_TYPE = "moderator_channel_id"
 
 #Endpoint for Rift Watcher API 
-RIFT_WATCHER_ENDPOINT = "http://rift-watcher-api:5000"
+RIFT_WATCHER_ENDPOINT = "http://rift-watcher:5000"

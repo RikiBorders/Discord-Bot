@@ -66,7 +66,7 @@ async def getLeagueProfile(interaction: discord.Interaction, summoner: str, tag:
     )
     
     await interaction.response.send_message(
-        ephemeral=True,
+        ephemeral=False,
         embed=build_league_profile_embed(data).to_discord_embed()
     )
 

@@ -5,11 +5,18 @@ from constant.Constants import BOT_NAME
 from random import choice
 
 def build_league_profile_embed(data: dict):
+    description_lines = [
+        f"Region: {data['region']}",
+        f"Solo/Duo: {data['solo_rank']}",
+        f"Flex: {data['flex_rank_display']}",
+    ]
 
-    # TODO: move data parsing to a separate function in the Bot layer
+    if data['player_id']:
+        description_lines.append(f"Player ID: {data['player_id']}")
+
     embed = Embed(
-        title=f"{data['username']}'s League of Legends Profile",
-        description=f"Rank: {data['rank']}\nLP: {data['lp']}\nWins: {data['wins']}\nLosses: {data['losses']}",
+        title=f"League of Legends Profile for {data['display_name']}",
+        description="\n".join(description_lines),
         color=0xff0000
     )
     return embed

@@ -135,8 +135,37 @@ class Bot():
         )
             
     async def get_player_overview(self, game_name: str, tag_line: str, region: str):
-        return await self.rift_watcher_client.get_player_overview(
+        rift_watcher_response = await self.rift_watcher_client.get_player_overview(
             game_name=game_name,
             tag_line=tag_line,
             region=region
         )
+        print(f"Rift watcher response for {game_name}#{tag_line} in region {region}: {rift_watcher_response}")
+
+        player_id = rift_watcher_response["player_id"]
+        display_name = rift_watcher_response["display_name"]
+        region = rift_watcher_response["region"]
+        rank = rift_watcher_response["rank"]
+        ranked_tier = rift_watcher_response["ranked_tier"]
+        ranked_division = rift_watcher_response["ranked_division"]
+        flex_rank = rift_watcher_response["flex_rank"]
+        flex_ranked_tier = rift_watcher_response["flex_ranked_tier"]
+        flex_ranked_division = rift_watcher_response["flex_ranked_division"]
+
+        solo_rank = rank
+        if ranked_tier or ranked_division:
+            tier_division = " ".join(filter(None, [ranked_tier, ranked_division]))
+            solo_rank = f"{tier_division} ({rank})" if rank else tier_division
+
+        flex_rank_display = flex_rank
+        if flex_ranked_tier or flex_ranked_division:
+            flex_tier_division = " ".join(filter(None, [flex_ranked_tier, flex_ranked_division]))
+            flex_rank_display = f"{flex_tier_division} ({flex_rank})" if flex_rank else flex_tier_division
+
+        return {
+            "player_id": player_id,
+            "display_name": display_name,
+            "region": region,
+            "solo_rank": solo_rank,
+            "flex_rank_display": flex_rank_display
+        }

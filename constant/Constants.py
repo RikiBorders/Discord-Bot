@@ -9,7 +9,7 @@ USER_ID_TO_INTRO_FILE_MAP = {
     257643785448718336: INTRO_FILE_PATH+'KOTH2_intro.wav',  # Conner
     251134467924688901: INTRO_FILE_PATH+'lizard_intro.wav',  # Matty
 }
-BOT_NAME = "Evil Knight" # Should be in parity with the  bot's discord username (not strictly necessary)
+BOT_NAME = "Walter" # Should be in parity with the  bot's discord username (not strictly necessary)
 
 ANNOUNCEMENT_CHANNEL_TYPE = "announcement_channel_id"
 MODERATOR_CHANNEL_TYPE = "moderator_channel_id"

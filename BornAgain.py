@@ -55,7 +55,6 @@ async def announce(interaction: discord.Interaction, title: str, description: st
         name="getleagueprofile",
         description="View your League of Legends overview.",
 )
-@app_commands.checks.has_permissions(administrator=True)
 @app_commands.describe(summoner="In-game-name", tag="In-game tag", region="Region")
 async def getLeagueProfile(interaction: discord.Interaction, summoner: str, tag: str, region: str): #
 

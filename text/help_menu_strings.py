@@ -5,6 +5,7 @@ HELP_MENU_DESCRIPTION = f"Welcome to the {BOT_NAME} Help Menu! \n\n" \
     "1. **Help**: Displays this help menu.\n"\
     "2. **ShareRules**: (Admin Only) Shares the server rules in a specified channel.\n"\
     "3. **Announce**: (Admin Only) Sends an announcement to the announcement channel.\n"\
+    "4. **GetLeagueProfile**: View a League of Legends player's overview by providing their in-game name, tag, and region.\n\n"\
 
 HELP_MENU_COMMANDS = {
     "Help": "Displays this help menu"

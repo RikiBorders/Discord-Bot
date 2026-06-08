@@ -16,8 +16,6 @@ def build_league_profile_embed(data: dict):
         description_lines[1] = f"Solo/Duo: {solo_ranked_emoji} {data['solo_rank']}"
     if flex_ranked_emoji:
         description_lines[2] = f"Flex: {flex_ranked_emoji} {data['flex_rank_display']}"
-    if data['player_id']:
-        description_lines.append(f"Player ID: {data['player_id']}")
 
     embed = Embed(
         title=f"League of Legends Profile for {data['display_name']}",

@@ -142,14 +142,13 @@ class Bot():
         )
         print(f"Rift watcher response for {game_name}#{tag_line} in region {region}: {rift_watcher_response}")
 
-        player_id = rift_watcher_response["player_id"]
+        puuid = rift_watcher_response["puuid"]
         display_name = rift_watcher_response["display_name"]
         region = rift_watcher_response["region"]
         rank = rift_watcher_response["rank"]
         ranked_tier = rift_watcher_response["ranked_tier"]
         ranked_division = rift_watcher_response["ranked_division"]
         flex_rank = rift_watcher_response["flex_rank"]
-        flex_ranked_tier = rift_watcher_response["flex_ranked_tier"]
         flex_ranked_division = rift_watcher_response["flex_ranked_division"]
 
         solo_rank = rank
@@ -158,12 +157,11 @@ class Bot():
             solo_rank = f"{tier_division} ({rank})" if rank else tier_division
 
         flex_rank_display = flex_rank
-        if flex_ranked_tier or flex_ranked_division:
-            flex_tier_division = " ".join(filter(None, [flex_ranked_tier, flex_ranked_division]))
-            flex_rank_display = f"{flex_tier_division} ({flex_rank})" if flex_rank else flex_tier_division
+        if flex_ranked_division:
+            flex_rank_display = f"{flex_ranked_division} ({flex_rank})" if flex_rank else flex_ranked_division
 
         return {
-            "player_id": player_id,
+            "puuid": puuid,
             "display_name": display_name,
             "region": region,
             "solo_rank": solo_rank,

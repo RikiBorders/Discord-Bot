@@ -36,9 +36,9 @@ async def help(interaction: discord.Interaction):
         description="Sends a message containing the server rules",
 )
 @app_commands.checks.has_permissions(administrator=True)
-@app_commands.describe(channel_id="channel_id")
-async def sharerules(interaction: discord.Interaction, channel_id: str):
-    await botInstance.send_rules_message(interaction, channel_id)
+@app_commands.describe(channel="Channel where the rules will be shared.")
+async def sharerules(interaction: discord.Interaction, channel: discord.TextChannel):
+    await botInstance.send_rules_message(interaction, channel)
 
 
 @client.tree.command(

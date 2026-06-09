@@ -27,7 +27,9 @@ class Bot():
         logger.info("Bot initialized successfully")
 
     def create_client(self):
-        intents = discord.Intents.all()
+        intents = discord.Intents.default()
+        intents.members = True
+        intents.message_content = True
         intents.voice_states = True
         client = commands.Bot(command_prefix='.', intents=intents)
         client.remove_command('help')
@@ -117,21 +119,17 @@ class Bot():
                 content=f"Error sending announcement: {str(e)}"
             )
 
-    async def send_rules_message(self, interaction: discord.Interaction, channel_id: str, ):
+    async def send_rules_message(self, interaction: discord.Interaction, channel: discord.TextChannel,):
         guild_id = self.get_guild_id_from_interaction(interaction)
         config_data = self.guild_configuration_manager_helper.get_configuration(guild_id)
         rules = config_data.get(RULES_KEY, [])
-        try:
-            channel = await self.client.fetch_channel(channel_id)
-        except discord.InvalidData as e:
-            await interaction.response.send_message(
-                ephemeral=True,
-                content=f"Error: Could not find channel with ID {channel_id}. Exception: {str(e)}"
-            )
-            return
-        if self.is_interaction_guild_equal_to_target_channel_id(interaction.guild_id, channel):
-            await channel.send(
-                embed=build_rules_embed(rules).to_discord_embed()
+
+        await channel.send(
+            embed=build_rules_embed(rules).to_discord_embed()
+        )
+        await interaction.response.send_message(
+            content=f'Rules shared in {channel.mention}.',
+            ephemeral=True
         )
             
     async def get_player_overview(self, game_name: str, tag_line: str, region: str):

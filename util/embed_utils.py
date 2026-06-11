@@ -45,6 +45,15 @@ def build_welcome_embed(member_count: int, image_urls: list[str]):
     return embed
 
 def build_announcement_embed(title: str, description: str, image_urls: list[str]):
+    embed = Embed(
+        title=title,
+        description=description,
+        image_url=choice(image_urls),
+        color=0xff0000 
+    )
+    return embed
+
+def build_birthday_embed(title: str, description: str, image_urls: list[str]):
 
     embed = Embed(
         title=title,

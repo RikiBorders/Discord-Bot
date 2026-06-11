@@ -1,6 +1,9 @@
+from secrets import choice
+
 import discord
 from discord.ext import commands
 import json
+from datetime import date
 from client.rift_watcher_client import RiftWatcherClient
 from logger_config.logger import get_logger
 
@@ -8,7 +11,8 @@ from client.supabase_client import SupabaseClient
 from exception.no_channel_found_exception import NoChannelFoundException
 from typing import Optional
 from helper.guild_configuration_manager_helper import RULES_KEY, GuildConfigurationManagerHelper
-from util.embed_utils import build_welcome_embed, build_announcement_embed, build_rules_embed
+from text.embed_strings import BIRTHDAY_TITLES
+from util.embed_utils import build_birthday_embed, build_welcome_embed, build_announcement_embed, build_rules_embed
 from constant.Constants import ANNOUNCEMENT_CHANNEL_TYPE, RIFT_WATCHER_ENDPOINT
 
 logger = get_logger(__name__)
@@ -18,7 +22,8 @@ class Bot():
 
     def __init__(self):
         self.client = self.create_client()
-        self.guild_configuration_manager_helper = GuildConfigurationManagerHelper()
+        self.supabase_client = SupabaseClient()
+        self.guild_configuration_manager_helper = GuildConfigurationManagerHelper(supabase_client=self.supabase_client)
         self.rift_watcher_client = RiftWatcherClient(server_url=RIFT_WATCHER_ENDPOINT)
         self.introTimer = {
             'active': False, 
@@ -51,6 +56,9 @@ class Bot():
     
     def get_image_urls_for_announcement_embed(self, configuration_data) -> list[str]:
         return configuration_data['image_urls']['announcement_image_urls']
+    
+    def get_image_urls_for_birthday_embed(self, configuration_data) -> list[str]:
+        return configuration_data['image_urls']['birthday_image_urls']
     
     def get_guild_id_from_interaction(self, interaction: discord.Interaction) -> int:
         return interaction.guild_id
@@ -119,7 +127,59 @@ class Bot():
                 content=f"Error sending announcement: {str(e)}"
             )
 
-    async def send_rules_message(self, interaction: discord.Interaction, channel: discord.TextChannel,):
+    async def announce_birthday(self, birthday_object: dict):
+        announcement_channel_id = birthday_object.get("announcement_channel_id")
+        guild_id = birthday_object.get("guild_id")
+        if not announcement_channel_id:
+            logger.warning(
+                "Skipping birthday announcement because announcement_channel_id is missing: %s",
+                birthday_object
+            )
+            return
+
+        try:
+            channel = await self.client.fetch_channel(announcement_channel_id)
+        except Exception as e:
+            logger.warning(
+                "Could not fetch announcement channel %s for guild %s: %s",
+                announcement_channel_id,
+                guild_id,
+                e
+            )
+            return
+
+        if channel.guild is None or channel.guild.id != guild_id:
+            logger.warning(
+                "Announcement channel %s does not belong to guild %s",
+                announcement_channel_id,
+                guild_id
+            )
+            return
+
+        config_data = self.guild_configuration_manager_helper.get_configuration(guild_id)
+        image_urls = self.get_image_urls_for_birthday_embed(config_data)
+        user_id = birthday_object.get("user_id")
+        title = choice(BIRTHDAY_TITLES)
+        description = f"Everyone, wish <@{user_id}> a very happy birthday!"
+
+        try:
+            await channel.send(
+                embed=build_birthday_embed(title, description, image_urls).to_discord_embed()
+            )
+            logger.info(
+                "Sent birthday announcement for user_id %s in guild %s to channel %s",
+                user_id,
+                guild_id,
+                announcement_channel_id
+            )
+        except Exception as e:
+            logger.error(
+                "Error sending birthday announcement to channel %s: %s",
+                announcement_channel_id,
+                e
+            )
+
+    async def send_rules_message(self, interaction: discord.Interaction, channel_id: str, ):
         guild_id = self.get_guild_id_from_interaction(interaction)
         config_data = self.guild_configuration_manager_helper.get_configuration(guild_id)
         rules = config_data.get(RULES_KEY, [])
@@ -165,3 +225,42 @@ class Bot():
             "solo_rank": solo_rank,
             "flex_rank_display": flex_rank_display
         }
+    
+    async def get_current_user_birthdays(self):
+        '''
+        Get the birthdays for the current day for a given guild.
+        '''
+        current_date = date.today().isoformat()
+
+        birthdays = self.supabase_client.get_current_birthdays(date=current_date)
+        logger.info(f"Birthdays fetched for date {current_date}: {birthdays}")
+
+        if isinstance(birthdays, dict) and "data" in birthdays:
+            birthdays = birthdays["data"]
+
+        parsed_birthdays = []
+        for record in birthdays or []:
+            guild_id = record.get("guild_id")
+            user_id = record.get("user_id")
+
+            announcement_config = record.get("guild_birthday_configurations")
+            announcement_channel_id = None
+            if isinstance(announcement_config, list) and announcement_config:
+                announcement_channel_id = announcement_config[0].get("announcement_channel_id")
+            elif isinstance(announcement_config, dict):
+                announcement_channel_id = announcement_config.get("announcement_channel_id")
+
+            if guild_id is None or user_id is None or announcement_channel_id is None:
+                logger.warning(
+                    "Skipping invalid birthday record from Supabase: %s",
+                    record
+                )
+                continue
+
+            parsed_birthdays.append({
+                "guild_id": guild_id,
+                "user_id": user_id,
+                "announcement_channel_id": announcement_channel_id
+            })
+        logger.info(f"Parsed birthdays for date {current_date}: {parsed_birthdays}")
+        return parsed_birthdays

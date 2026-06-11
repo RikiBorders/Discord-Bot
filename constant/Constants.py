@@ -1,6 +1,7 @@
 REQUEST_HEADERS = {'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36'}
 INTRO_TIMER_CHECK_TICK_IN_SECONDS = 1  # Keep this set to one second. This way, the timer is updated every second.
 AUTO_DISCONNECT_TICK_IN_SECONDS = 3  # Keep this set to one second. This way, the timer is updated every second.
+BIRTHDAY_CHECK_TICK_IN_SECONDS = 86400 # Check for birthdays every 24 hours
 
 INTRO_FILE_PATH = 'media/audio/'
 USER_ID_TO_INTRO_FILE_MAP = {

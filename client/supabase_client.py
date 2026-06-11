@@ -26,3 +26,30 @@ class SupabaseClient:
         )
         logger.info(f"Fetched server data for guild_id {guild_id} from Supabase: {response}")
         return response
+
+    def get_current_birthdays(self, date: str) -> list[dict]:
+        """
+        Get all users whose birthday is on the provided date along with
+        the guilds where birthday announcements are enabled.
+        """
+
+        response = (
+            self.client
+                .table("guild_birthdays")
+                .select("""
+                    guild_id,
+                    user_id,
+                    birthdays!inner(
+                        birthday
+                    ),
+                    guild_birthday_configurations!inner(
+                        announcement_channel_id,
+                        announcements_enabled
+                    )
+                """)
+                .eq("enabled", True)
+                .eq("guild_birthday_configurations.announcements_enabled", True)
+                .eq("birthdays.birthday", date)
+                .execute()
+        )
+        return response.data

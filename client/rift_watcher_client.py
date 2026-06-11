@@ -1,9 +1,11 @@
 import aiohttp
 
+from constant.Constants import RIFT_WATCHER_ENDPOINT
+
 
 class RiftWatcherClient:
-    def __init__(self, server_url):
-        self.server_url = server_url
+    def __init__(self):
+        self.server_url = RIFT_WATCHER_ENDPOINT
 
     async def get_player_overview(
         self,

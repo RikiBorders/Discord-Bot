@@ -13,7 +13,7 @@ from typing import Optional
 from helper.guild_configuration_manager_helper import RULES_KEY, GuildConfigurationManagerHelper
 from text.embed_strings import BIRTHDAY_TITLES
 from util.embed_utils import build_birthday_embed, build_welcome_embed, build_announcement_embed, build_rules_embed
-from constant.Constants import ANNOUNCEMENT_CHANNEL_TYPE, RIFT_WATCHER_ENDPOINT
+from constant.Constants import ANNOUNCEMENT_CHANNEL_TYPE
 
 logger = get_logger(__name__)
 
@@ -24,7 +24,7 @@ class Bot():
         self.client = self.create_client()
         self.supabase_client = SupabaseClient()
         self.guild_configuration_manager_helper = GuildConfigurationManagerHelper(supabase_client=self.supabase_client)
-        self.rift_watcher_client = RiftWatcherClient(server_url=RIFT_WATCHER_ENDPOINT)
+        self.rift_watcher_client = RiftWatcherClient()
         self.introTimer = {
             'active': False, 
             'current_time': 0

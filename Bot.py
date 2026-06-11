@@ -179,7 +179,7 @@ class Bot():
                 e
             )
 
-    async def send_rules_message(self, interaction: discord.Interaction, channel_id: str, ):
+    async def send_rules_message(self, interaction: discord.Interaction, channel: discord.TextChannel):
         guild_id = self.get_guild_id_from_interaction(interaction)
         config_data = self.guild_configuration_manager_helper.get_configuration(guild_id)
         rules = config_data.get(RULES_KEY, [])

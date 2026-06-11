@@ -198,7 +198,7 @@ class Bot():
             tag_line=tag_line,
             region=region
         )
-        print(f"Rift watcher response for {game_name}#{tag_line} in region {region}: {rift_watcher_response}")
+        logger.info(f"Rift watcher response for {game_name}#{tag_line} in region {region}: {rift_watcher_response}")
 
         puuid = rift_watcher_response["puuid"]
         display_name = rift_watcher_response["display_name"]

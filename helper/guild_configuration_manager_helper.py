@@ -11,11 +11,11 @@ RULES_KEY = 'rules'
 
 class GuildConfigurationManagerHelper:
 
-    def __init__(self):
+    def __init__(self, supabase_client: SupabaseClient):
         self.config_object_ttl_in_seconds = 43200  # 12 hours in seconds
         self.max_size = 128
         self.cache = TTLCache(maxsize=self.max_size, ttl=self.config_object_ttl_in_seconds)
-        self.supabase_client = SupabaseClient()
+        self.supabase_client = supabase_client
 
     def get_configuration(self, guild_id: int):
         if guild_id in self.cache:
